@@ -1,211 +1,161 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import  { useState } from 'react';
 
-export default function DistrictAdminForm() {
-  const [step, setStep] = useState(1);
-  const [otp, setOtp] = useState("");
-  const [sentOtp, setSentOtp] = useState("");
-  const [emailForOtp, setEmailForOtp] = useState("");
+function DistrictAdminForm() {
+  // State for form fields
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    district: '',
+    phone_number: '',
+    password: '',
+  });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isValid },
-    reset,
-  } = useForm({ mode: "onChange" });
+  // State for API call status (loading, error, success)
+  const [status, setStatus] = useState('idle'); // 'idle', 'loading', 'success', 'error'
+  const [error, setError] = useState(null);
+  const [createdAdmin, setCreatedAdmin] = useState(null);
 
-  const {
-    register: registerOtp,
-    handleSubmit: handleOtpSubmit,
-    formState: { errors: otpErrors },
-  } = useForm({ mode: "onChange" });
-
-  const onFormSubmit = (data) => {
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setOtp(generatedOtp);
-    setEmailForOtp(data.email);
-    setSentOtp(`OTP sent to ${data.email}`);
-    setStep(2);
-    console.log("Generated OTP:", generatedOtp);
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
-  const onOtpSubmit = (data) => {
-    if (data.otp === otp) {
-      alert("✅ OTP Verified Successfully!");
-      reset();
-      setStep(1);
-    } else {
-      alert("❌ Incorrect OTP. Please try again.");
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus('loading');
+    setError(null);
+    setCreatedAdmin(null);
+
+    try {
+      const response = await fetch('http://localhost:8000/district-admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.detail || 'An unknown error occurred.');
+      }
+      
+      setStatus('success');
+      setCreatedAdmin(result);
+      setFormData({ name: '', email: '', district: '', phone_number: '', password: '' });
+
+    } catch (err) {
+      setStatus('error');
+      setError(err.message);
     }
   };
 
-  const resendOtp = () => {
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setOtp(generatedOtp);
-    setSentOtp(`New OTP sent to ${emailForOtp}`);
-    console.log("Resent OTP:", generatedOtp);
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[url('/district.jpeg')] bg-cover bg-center bg-fixed p-6">
-      <div className="bg-white/10 backdrop-blur-2xl rounded-2xl border border-white/30 shadow-2xl p-8 w-full max-w-md transition-all duration-300">
-        <h1 className="text-2xl font-bold text-white text-center mb-6">
-          District Administrator
-        </h1>
+    <div className="max-w-xl mx-auto my-10 p-8 bg-white rounded-xl shadow-lg">
+      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+        Create New District Admin
+      </h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+            Full Name
+          </label>
+          <input
+            className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+            Email Address
+          </label>
+          <input
+            className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="district">
+            District
+          </label>
+          <input
+            className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="text"
+            id="district"
+            name="district"
+            value={formData.district}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phone_number">
+            Phone Number
+          </label>
+          <input
+            className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="tel"
+            id="phone_number"
+            name="phone_number"
+            value={formData.phone_number}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-6">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+            Password
+          </label>
+          <input
+            className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          disabled={status === 'loading'}
+        >
+          {status === 'loading' ? 'Creating...' : 'Create Admin'}
+        </button>
+      </form>
 
-        {/* STEP 1 → FORM */}
-        {step === 1 && (
-          <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-5">
-            {/* Email */}
-            <div>
-              <label className="block text-white font-medium mb-1">Email:</label>
-              <input
-                type="email"
-                {...register("email", {
-                  required: "Email is required",
-                  pattern: {
-                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: "Enter a valid email address",
-                  },
-                })}
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none ${
-                  errors.email
-                    ? "border-red-500 focus:border-red-500"
-                    : "border-white/30 focus:border-green-400"
-                } bg-white/20 text-white placeholder-gray-300`}
-                placeholder="admin@example.com"
-              />
-              {errors.email && (
-                <p className="text-red-400 text-sm mt-1">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-white font-medium mb-1">
-                Password:
-              </label>
-              <input
-                type="password"
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: {
-                    value: 6,
-                    message: "Password must be at least 6 characters",
-                  },
-                })}
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none ${
-                  errors.password
-                    ? "border-red-500 focus:border-red-500"
-                    : "border-white/30 focus:border-green-400"
-                } bg-white/20 text-white placeholder-gray-300`}
-                placeholder="Enter password"
-              />
-              {errors.password && (
-                <p className="text-red-400 text-sm mt-1">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            {/* District Name */}
-            <div>
-              <label className="block text-white font-medium mb-1">
-                District Name:
-              </label>
-              <input
-                type="text"
-                {...register("districtName", {
-                  required: "District name is required",
-                  minLength: {
-                    value: 3,
-                    message: "District name must be at least 3 characters",
-                  },
-                })}
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none ${
-                  errors.districtName
-                    ? "border-red-500 focus:border-red-500"
-                    : "border-white/30 focus:border-green-400"
-                } bg-white/20 text-white placeholder-gray-300`}
-                placeholder="Enter district name"
-              />
-              {errors.districtName && (
-                <p className="text-red-400 text-sm mt-1">
-                  {errors.districtName.message}
-                </p>
-              )}
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={!isValid}
-              className={`w-full py-2 rounded-lg text-white font-semibold transition-all duration-300 ${
-                isValid
-                  ? "bg-green-600 hover:bg-green-700 shadow-lg"
-                  : "bg-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Next
-            </button>
-          </form>
-        )}
-
-        {/* STEP 2 → OTP */}
-        {step === 2 && (
-          <form
-            onSubmit={handleOtpSubmit(onOtpSubmit)}
-            className="space-y-5 mt-2"
-          >
-            <p className="text-green-300 text-sm text-center">{sentOtp}</p>
-
-            {/* OTP */}
-            <div>
-              <label className="block text-white font-medium mb-1">OTP:</label>
-              <input
-                type="text"
-                {...registerOtp("otp", {
-                  required: "OTP is required",
-                  pattern: {
-                    value: /^[0-9]{6}$/,
-                    message: "OTP must be 6 digits",
-                  },
-                })}
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none ${
-                  otpErrors.otp
-                    ? "border-red-500 focus:border-red-500"
-                    : "border-white/30 focus:border-green-400"
-                } bg-white/20 text-white placeholder-gray-300`}
-                placeholder="Enter 6-digit OTP"
-              />
-              {otpErrors.otp && (
-                <p className="text-red-400 text-sm mt-1">
-                  {otpErrors.otp.message}
-                </p>
-              )}
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                className="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-semibold transition-all duration-300"
-              >
-                Verify OTP
-              </button>
-              <button
-                type="button"
-                onClick={resendOtp}
-                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold transition-all duration-300"
-              >
-                Resend OTP
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+      {/* --- Feedback Messages --- */}
+      {status === 'success' && createdAdmin && (
+        <div className="mt-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded-md text-center">
+          <p className="font-bold">Admin created successfully!</p>
+          <p className="text-sm">Name: {createdAdmin.name} ({createdAdmin.status})</p>
+        </div>
+      )}
+      {status === 'error' && (
+        <div className="mt-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded-md text-center">
+          <p className="font-bold">Error:</p>
+          <p>{error}</p>
+        </div>
+      )}
     </div>
   );
 }
+
+export default DistrictAdminForm;
